@@ -25,9 +25,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/register", "/api/auth/login").permitAll() // ✅ Permite login e cadastro
                 .requestMatchers("/api/auth/usuarios/**").permitAll() // ✅ Permite acesso à listagem de usuários
                 .requestMatchers("/api/auth/**").permitAll() // ✅ Permite todas as rotas de autenticação
-                .requestMatchers("/api/profissionais/**").permitAll() // ✅ Permite acesso ao CRUD de profissionais
+                .requestMatchers("/api/profissionais/**").permitAll() // ✅ Permite CRUD de profissionais
                 .requestMatchers("/api/consultas/**").permitAll() // ✅ Permite CRUD de consultas
                 .requestMatchers("/api/pacientes/**").permitAll() // ✅ Permite CRUD de pacientes
+                .requestMatchers("/api/clinicas/**").permitAll() // ✅ Permite CRUD de clínicas
                 .anyRequest().authenticated() // 🔒 Bloqueia o restante
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -49,10 +50,14 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:5500")); // ✅ Permite chamadas do front-end
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // ✅ Garante que o PUT seja permitido
+        config.setAllowedOrigins(List.of(
+            "http://127.0.0.1:5500",
+            "http://localhost:5500",
+            "https://67a687dbbcc6fc006be4af8e--clinicafisio.netlify.app",
+            "https://clinicafisio.netlify.app" // ✅ Permite chamadas do Netlify (URL final sem build preview)
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // ✅ Permite todos os métodos HTTP
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setAllowedOrigins(List.of("https://67a687dbbcc6fc006be4af8e--clinicafisio.netlify.app/"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/pacientes")
@@ -16,38 +18,69 @@ public class PacienteController {
     @Autowired
     private PacienteService pacienteService;
 
-    // ✅ Criar Paciente
     @PostMapping
-    public ResponseEntity<Paciente> cadastrarPaciente(@RequestBody Paciente paciente) {
-        Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoPaciente);
+    public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
+        try {
+            Paciente paciente = new Paciente(
+                (String) payload.get("nome"),
+                (int) payload.get("idade"),
+                (String) payload.get("telefone"),
+                (String) payload.get("endereco")
+            );
+
+            Set<Long> clinicaIds = ((List<Integer>) payload.get("clinicaIds")).stream()
+                .map(Long::valueOf)
+                .collect(java.util.stream.Collectors.toSet());
+
+            Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente, clinicaIds);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoPaciente);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro: " + e.getMessage());
+        }
     }
 
-    // ✅ Listar Pacientes
     @GetMapping
     public ResponseEntity<List<Paciente>> listarPacientes() {
-        List<Paciente> pacientes = pacienteService.listarPacientes();
-        return ResponseEntity.ok(pacientes);
+        return ResponseEntity.ok(pacienteService.listarPacientes());
     }
 
-    // ✅ Buscar Paciente por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Paciente> buscarPacientePorId(@PathVariable Long id) {
-        Paciente paciente = pacienteService.buscarPacientePorId(id);
-        return ResponseEntity.ok(paciente);
+    public ResponseEntity<?> buscarPacientePorId(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(pacienteService.buscarPacientePorId(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
-    // ✅ Atualizar Paciente
     @PutMapping("/{id}")
-    public ResponseEntity<Paciente> atualizarPaciente(@PathVariable Long id, @RequestBody Paciente pacienteAtualizado) {
-        Paciente paciente = pacienteService.atualizarPaciente(id, pacienteAtualizado);
-        return ResponseEntity.ok(paciente);
+    public ResponseEntity<?> atualizarPaciente(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        try {
+            Paciente paciente = new Paciente(
+                (String) payload.get("nome"),
+                (int) payload.get("idade"),
+                (String) payload.get("telefone"),
+                (String) payload.get("endereco")
+            );
+
+            Set<Long> clinicaIds = ((List<Integer>) payload.get("clinicaIds")).stream()
+                .map(Long::valueOf)
+                .collect(java.util.stream.Collectors.toSet());
+
+            Paciente pacienteAtualizado = pacienteService.atualizarPaciente(id, paciente, clinicaIds);
+            return ResponseEntity.ok(pacienteAtualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
-    // ✅ Deletar Paciente
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletarPaciente(@PathVariable Long id) {
-        pacienteService.deletarPaciente(id);
-        return ResponseEntity.ok("Paciente removido com sucesso!");
+    public ResponseEntity<?> deletarPaciente(@PathVariable Long id) {
+        try {
+            pacienteService.deletarPaciente(id);
+            return ResponseEntity.ok("Paciente removido com sucesso!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }

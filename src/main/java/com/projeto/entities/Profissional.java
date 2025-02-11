@@ -1,6 +1,7 @@
 package com.projeto.entities;
 
 import jakarta.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table(name = "profissionais")
@@ -22,6 +23,14 @@ public class Profissional {
     @Column(nullable = false, length = 20)
     private String telefone;
 
+    @ManyToMany
+    @JoinTable(
+        name = "profissional_clinica",
+        joinColumns = @JoinColumn(name = "profissional_id"),
+        inverseJoinColumns = @JoinColumn(name = "clinica_id")
+    )
+    private Set<Clinica> clinicas;
+
     public Profissional() {}
 
     public Profissional(String nome, String especialidade, String registro, String telefone) {
@@ -31,7 +40,6 @@ public class Profissional {
         this.telefone = telefone;
     }
 
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -46,4 +54,7 @@ public class Profissional {
 
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
+
+    public Set<Clinica> getClinicas() { return clinicas; }
+    public void setClinicas(Set<Clinica> clinicas) { this.clinicas = clinicas; }
 }
