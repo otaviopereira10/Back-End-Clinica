@@ -3,7 +3,7 @@ package com.projeto.services;
 import com.projeto.entities.Login;
 import com.projeto.repository.LoginRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -15,11 +15,11 @@ public class LoginService {
     private LoginRepository loginRepository;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder; // ✅ Mantém o BCrypt, mas injeta da forma correta
 
     public Login autenticarUsuario(String user, String senha) {
         System.out.println("🔍 Buscando usuário: " + user);
-        
+
         Optional<Login> usuarioOpt = loginRepository.findByUser(user);
 
         if (usuarioOpt.isEmpty()) {
@@ -39,9 +39,5 @@ public class LoginService {
 
         System.out.println("✅ Login bem-sucedido!");
         return usuario;
-        
-        
     }
-    
 }
-
