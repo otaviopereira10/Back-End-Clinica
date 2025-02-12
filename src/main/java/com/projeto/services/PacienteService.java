@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -21,7 +22,17 @@ public class PacienteService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
-    // ✅ CADASTRAR PACIENTE (Agora garante que a relação Paciente-Clínica seja mantida)
+    // ✅ Buscar todos os pacientes com clínicas associadas
+    public List<Paciente> listarPacientes() {
+        return pacienteRepository.findAll();
+    }
+
+    // ✅ Buscar um paciente por ID garantindo que suas clínicas sejam carregadas
+    public Paciente buscarPacientePorId(Long id) {
+        Optional<Paciente> paciente = pacienteRepository.findByIdWithClinicas(id);
+        return paciente.orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
+    }
+
     @Transactional
     public Paciente cadastrarPaciente(Paciente paciente, Set<Long> clinicaIds) {
         if (clinicaIds.isEmpty()) {
@@ -35,26 +46,13 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        Paciente novoPaciente = pacienteRepository.save(paciente);
-        novoPaciente.setClinicas(clinicas);
-        return pacienteRepository.save(novoPaciente);
+        paciente.setClinicas(clinicas);
+        return pacienteRepository.save(paciente);
     }
 
-    // ✅ LISTAR PACIENTES COM AS CLÍNICAS (Corrigido para retornar a lista corretamente)
-    public List<Paciente> listarPacientesComClinicas() {
-        return pacienteRepository.findAll(); // Já usa @EntityGraph no Repository para carregar as clínicas
-    }
-
-    // ✅ BUSCAR PACIENTE POR ID COM CLÍNICAS
-    public Paciente buscarPacientePorIdComClinicas(Long id) {
-        return pacienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
-    }
-
-    // ✅ ATUALIZAR PACIENTE (Mantém a relação com as clínicas)
     @Transactional
     public Paciente atualizarPaciente(Long id, Paciente pacienteAtualizado, Set<Long> clinicaIds) {
-        Paciente pacienteExistente = buscarPacientePorIdComClinicas(id);
+        Paciente pacienteExistente = buscarPacientePorId(id);
 
         pacienteExistente.setNome(pacienteAtualizado.getNome());
         pacienteExistente.setIdade(pacienteAtualizado.getIdade());
@@ -72,10 +70,9 @@ public class PacienteService {
         return pacienteRepository.save(pacienteExistente);
     }
 
-    // ✅ DELETAR PACIENTE (Remove a relação com as clínicas antes de excluir)
     @Transactional
     public void deletarPaciente(Long id) {
-        Paciente paciente = buscarPacientePorIdComClinicas(id);
+        Paciente paciente = buscarPacientePorId(id);
 
         for (Clinica clinica : paciente.getClinicas()) {
             clinica.getPacientes().remove(paciente);
