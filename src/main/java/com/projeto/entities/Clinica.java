@@ -3,8 +3,7 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "clinicas")
@@ -20,11 +19,8 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany
-    @JoinTable(name = "paciente_clinica",
-            joinColumns = @JoinColumn(name = "clinica_id"),
-            inverseJoinColumns = @JoinColumn(name = "paciente_id"))
-    @JsonManagedReference // ✅ Permite listar os pacientes dentro da clínica
+    @ManyToMany(mappedBy = "clinicas") 
+    @JsonBackReference // ✅ Agora evita o loop ao serializar clínicas
     private Set<Paciente> pacientes = new HashSet<>();
 
     // Getters e Setters
