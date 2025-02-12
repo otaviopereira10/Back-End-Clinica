@@ -7,7 +7,6 @@ import com.projeto.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +26,6 @@ public class PacienteService {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
-        // ✅ Carrega as clínicas existentes
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -35,30 +33,19 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        // ✅ Salva o paciente e associa as clínicas
         paciente.setClinicas(clinicas);
         return pacienteRepository.save(paciente);
     }
 
     @Transactional(readOnly = true)
     public List<Paciente> listarPacientes() {
-        List<Paciente> pacientes = pacienteRepository.findAll();
-
-        // 🔥 Garante que as clínicas foram carregadas
-        pacientes.forEach(p -> p.getClinicas().size());
-
-        return pacientes;
+        return pacienteRepository.findAllWithClinicas();
     }
 
     @Transactional(readOnly = true)
     public Paciente buscarPacientePorId(Long id) {
-        Paciente paciente = pacienteRepository.findById(id)
+        return pacienteRepository.findByIdWithClinicas(id)
                 .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
-
-        // ✅ Força o carregamento das clínicas associadas
-        paciente.getClinicas().size();
-        
-        return paciente;
     }
 
     @Transactional
@@ -70,7 +57,6 @@ public class PacienteService {
         pacienteExistente.setTelefone(pacienteAtualizado.getTelefone());
         pacienteExistente.setEndereco(pacienteAtualizado.getEndereco());
 
-        // ✅ Atualiza as clínicas associadas
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -79,20 +65,16 @@ public class PacienteService {
         }
 
         pacienteExistente.setClinicas(clinicas);
-
         return pacienteRepository.save(pacienteExistente);
     }
 
     @Transactional
     public void deletarPaciente(Long id) {
         Paciente paciente = buscarPacientePorId(id);
-
-        // ✅ Remove a relação ManyToMany antes da exclusão
         for (Clinica clinica : paciente.getClinicas()) {
             clinica.getPacientes().remove(paciente);
             clinicaRepository.save(clinica);
         }
-
         pacienteRepository.delete(paciente);
     }
 }
