@@ -7,6 +7,7 @@ import com.projeto.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,11 +23,11 @@ public class PacienteService {
 
     @Transactional
     public Paciente cadastrarPaciente(Paciente paciente, Set<Long> clinicaIds) {
-        if (clinicaIds.isEmpty()) {
+        if (clinicaIds == null || clinicaIds.isEmpty()) {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
-        // 🔥 Recupera as clínicas pelo ID e adiciona ao paciente
+        // 🔥 Recupera as clínicas existentes no banco
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -34,11 +35,17 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        // 🔥 Associa as clínicas ao paciente ANTES de salvar
+        // 🔥 Associa as clínicas ao paciente
         paciente.setClinicas(clinicas);
-        
-        // 🔥 Salva o paciente NO BANCO com as clínicas associadas
+
+        // 🔥 Salva o paciente com as associações já feitas
         Paciente novoPaciente = pacienteRepository.save(paciente);
+
+        // 🔥 Agora, associamos o paciente às clínicas e atualizamos o banco
+        for (Clinica clinica : clinicas) {
+            clinica.getPacientes().add(novoPaciente);
+            clinicaRepository.save(clinica);
+        }
 
         return novoPaciente;
     }
@@ -71,6 +78,7 @@ public class PacienteService {
         }
 
         pacienteExistente.setClinicas(clinicas);
+
         return pacienteRepository.save(pacienteExistente);
     }
 
