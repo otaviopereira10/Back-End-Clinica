@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "clinicas")
@@ -24,7 +24,7 @@ public class Clinica {
     @JoinTable(name = "paciente_clinica",
             joinColumns = @JoinColumn(name = "clinica_id"),
             inverseJoinColumns = @JoinColumn(name = "paciente_id"))
-    @JsonManagedReference // Evita referência cíclica
+    @JsonManagedReference // ✅ Permite listar os pacientes dentro da clínica
     private Set<Paciente> pacientes = new HashSet<>();
 
     // Getters e Setters
