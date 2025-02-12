@@ -1,6 +1,7 @@
 package com.projeto.entities;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -17,11 +18,16 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany(mappedBy = "clinicas")
-    private Set<Paciente> pacientes;
+    @ManyToMany
+    @JoinTable(
+        name = "paciente_clinica", // ✅ Correto para manter a relação ManyToMany
+        joinColumns = @JoinColumn(name = "clinica_id"),
+        inverseJoinColumns = @JoinColumn(name = "paciente_id")
+    )
+    private Set<Paciente> pacientes = new HashSet<>();
 
     @ManyToMany(mappedBy = "clinicas")
-    private Set<Profissional> profissionais;
+    private Set<Profissional> profissionais = new HashSet<>();
 
     public Clinica() {}
 

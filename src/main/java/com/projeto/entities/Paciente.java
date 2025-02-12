@@ -1,6 +1,7 @@
 package com.projeto.entities;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -11,25 +12,20 @@ public class Paciente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nome", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String nome;
 
-    @Column(name = "idade", nullable = false)
+    @Column(nullable = false)
     private int idade;
 
-    @Column(name = "telefone", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String telefone;
 
-    @Column(name = "endereco", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany
-    @JoinTable(
-        name = "paciente_clinica",
-        joinColumns = @JoinColumn(name = "paciente_id"),
-        inverseJoinColumns = @JoinColumn(name = "clinica_id")
-    )
-    private Set<Clinica> clinicas;
+    @ManyToMany(mappedBy = "pacientes")  // 🔥 Sem JoinTable aqui
+    private Set<Clinica> clinicas = new HashSet<>();
 
     public Paciente() {}
 
@@ -40,6 +36,7 @@ public class Paciente {
         this.endereco = endereco;
     }
 
+    // ✅ Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
