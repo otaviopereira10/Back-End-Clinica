@@ -7,7 +7,6 @@ import com.projeto.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +26,6 @@ public class PacienteService {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
-        // 🔥 Recupera as clínicas existentes no banco
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -35,19 +33,18 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        // 🔥 Associa as clínicas ao paciente
+        // 🔥 Primeiro, salva o paciente para gerar um ID
+        paciente = pacienteRepository.save(paciente);
+
+        // 🔥 Associa as clínicas ao paciente e o paciente às clínicas
         paciente.setClinicas(clinicas);
-
-        // 🔥 Salva o paciente com as associações já feitas
-        Paciente novoPaciente = pacienteRepository.save(paciente);
-
-        // 🔥 Agora, associamos o paciente às clínicas e atualizamos o banco
         for (Clinica clinica : clinicas) {
-            clinica.getPacientes().add(novoPaciente);
+            clinica.getPacientes().add(paciente);
             clinicaRepository.save(clinica);
         }
 
-        return novoPaciente;
+        // 🔥 Atualiza e salva o paciente com a relação ManyToMany
+        return pacienteRepository.save(paciente);
     }
 
     @Transactional(readOnly = true)
@@ -86,7 +83,6 @@ public class PacienteService {
     public void deletarPaciente(Long id) {
         Paciente paciente = buscarPacientePorId(id);
         
-        // 🔥 Remove a relação ManyToMany antes de excluir o paciente
         for (Clinica clinica : paciente.getClinicas()) {
             clinica.getPacientes().remove(paciente);
             clinicaRepository.save(clinica);

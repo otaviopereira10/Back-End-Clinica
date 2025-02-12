@@ -3,11 +3,9 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "clinicas")
-@JsonIgnoreProperties({"pacientes", "profissionais"})
 public class Clinica {
 
     @Id
@@ -20,12 +18,7 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany
-    @JoinTable(
-        name = "paciente_clinica", // ✅ Correto para manter a relação ManyToMany
-        joinColumns = @JoinColumn(name = "clinica_id"),
-        inverseJoinColumns = @JoinColumn(name = "paciente_id")
-    )
+    @ManyToMany(mappedBy = "clinicas")
     private Set<Paciente> pacientes = new HashSet<>();
 
     @ManyToMany(mappedBy = "clinicas")

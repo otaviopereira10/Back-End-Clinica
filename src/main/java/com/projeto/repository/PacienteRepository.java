@@ -10,12 +10,10 @@ import java.util.Optional;
 
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
-    
-    // 🔥 Garante que as clínicas sejam carregadas no GET
+
     @Query("SELECT DISTINCT p FROM Paciente p LEFT JOIN FETCH p.clinicas")
     List<Paciente> findAllWithClinicas();
 
-    // 🔥 Garante que as clínicas sejam carregadas ao buscar por ID
     @Query("SELECT p FROM Paciente p LEFT JOIN FETCH p.clinicas WHERE p.id = :id")
     Optional<Paciente> findByIdWithClinicas(Long id);
 }
