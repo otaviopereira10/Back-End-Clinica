@@ -26,6 +26,7 @@ public class PacienteService {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
+        // 🔥 Recupera as clínicas pelo ID e adiciona ao paciente
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -33,8 +34,13 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
+        // 🔥 Associa as clínicas ao paciente ANTES de salvar
         paciente.setClinicas(clinicas);
-        return pacienteRepository.save(paciente);
+        
+        // 🔥 Salva o paciente NO BANCO com as clínicas associadas
+        Paciente novoPaciente = pacienteRepository.save(paciente);
+
+        return novoPaciente;
     }
 
     @Transactional(readOnly = true)
@@ -71,10 +77,13 @@ public class PacienteService {
     @Transactional
     public void deletarPaciente(Long id) {
         Paciente paciente = buscarPacientePorId(id);
+        
+        // 🔥 Remove a relação ManyToMany antes de excluir o paciente
         for (Clinica clinica : paciente.getClinicas()) {
             clinica.getPacientes().remove(paciente);
             clinicaRepository.save(clinica);
         }
+
         pacienteRepository.delete(paciente);
     }
 }
