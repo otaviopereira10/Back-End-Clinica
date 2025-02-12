@@ -7,6 +7,7 @@ import com.projeto.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,13 +21,13 @@ public class PacienteService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
+    // ✅ CADASTRAR PACIENTE (Agora garante que a relação Paciente-Clínica seja mantida)
     @Transactional
     public Paciente cadastrarPaciente(Paciente paciente, Set<Long> clinicaIds) {
-        if (clinicaIds == null || clinicaIds.isEmpty()) {
+        if (clinicaIds.isEmpty()) {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
-        // 🔥 Validação: Verificar se todas as clínicas existem antes de salvar o paciente
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -34,40 +35,32 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        // 🔥 Primeiro, salva o paciente no banco de dados para garantir que tenha um ID válido
-        paciente = pacienteRepository.save(paciente);
-
-        // 🔥 Agora associa o paciente às clínicas e vice-versa
-        paciente.setClinicas(clinicas);
-        for (Clinica clinica : clinicas) {
-            clinica.getPacientes().add(paciente);
-            clinicaRepository.save(clinica); // 🔥 Atualiza a relação no banco
-        }
-
-        return pacienteRepository.save(paciente);
+        Paciente novoPaciente = pacienteRepository.save(paciente);
+        novoPaciente.setClinicas(clinicas);
+        return pacienteRepository.save(novoPaciente);
     }
 
-    @Transactional(readOnly = true)
-    public List<Paciente> listarPacientes() {
-        return pacienteRepository.findAllWithClinicas();
+    // ✅ LISTAR PACIENTES COM AS CLÍNICAS (Corrigido para retornar a lista corretamente)
+    public List<Paciente> listarPacientesComClinicas() {
+        return pacienteRepository.findAll(); // Já usa @EntityGraph no Repository para carregar as clínicas
     }
 
-    @Transactional(readOnly = true)
-    public Paciente buscarPacientePorId(Long id) {
-        return pacienteRepository.findByIdWithClinicas(id)
+    // ✅ BUSCAR PACIENTE POR ID COM CLÍNICAS
+    public Paciente buscarPacientePorIdComClinicas(Long id) {
+        return pacienteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
     }
 
+    // ✅ ATUALIZAR PACIENTE (Mantém a relação com as clínicas)
     @Transactional
     public Paciente atualizarPaciente(Long id, Paciente pacienteAtualizado, Set<Long> clinicaIds) {
-        Paciente pacienteExistente = buscarPacientePorId(id);
+        Paciente pacienteExistente = buscarPacientePorIdComClinicas(id);
 
         pacienteExistente.setNome(pacienteAtualizado.getNome());
         pacienteExistente.setIdade(pacienteAtualizado.getIdade());
         pacienteExistente.setTelefone(pacienteAtualizado.getTelefone());
         pacienteExistente.setEndereco(pacienteAtualizado.getEndereco());
 
-        // 🔥 Verifica se as clínicas existem antes de atualizar
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -75,21 +68,15 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        // 🔥 Atualiza as clínicas associadas ao paciente
         pacienteExistente.setClinicas(clinicas);
-        for (Clinica clinica : clinicas) {
-            clinica.getPacientes().add(pacienteExistente);
-            clinicaRepository.save(clinica);
-        }
-
         return pacienteRepository.save(pacienteExistente);
     }
 
+    // ✅ DELETAR PACIENTE (Remove a relação com as clínicas antes de excluir)
     @Transactional
     public void deletarPaciente(Long id) {
-        Paciente paciente = buscarPacientePorId(id);
-        
-        // 🔥 Remove o paciente das clínicas antes de deletá-lo
+        Paciente paciente = buscarPacientePorIdComClinicas(id);
+
         for (Clinica clinica : paciente.getClinicas()) {
             clinica.getPacientes().remove(paciente);
             clinicaRepository.save(clinica);

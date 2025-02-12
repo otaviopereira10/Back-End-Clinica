@@ -23,6 +23,7 @@ public class PacienteController {
     @PostMapping
     public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
         try {
+            // 🔍 Validação dos campos obrigatórios
             if (!payload.containsKey("nome") || !payload.containsKey("idade") ||
                 !payload.containsKey("telefone") || !payload.containsKey("endereco") ||
                 !payload.containsKey("clinicaIds")) {
@@ -36,6 +37,7 @@ public class PacienteController {
                 (String) payload.get("endereco")
             );
 
+            // 🔍 Convertendo lista de clinicas para Set<Long>
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
             if (clinicaIdsList == null || clinicaIdsList.isEmpty()) {
                 return ResponseEntity.badRequest().body("Erro: O paciente deve estar associado a pelo menos uma clínica.");
@@ -51,17 +53,21 @@ public class PacienteController {
         }
     }
 
-    // ✅ LISTAR TODOS OS PACIENTES
+    // ✅ LISTAR TODOS OS PACIENTES (Incluindo Clínicas)
     @GetMapping
     public ResponseEntity<List<Paciente>> listarPacientes() {
-        return ResponseEntity.ok(pacienteService.listarPacientes());
+        try {
+            return ResponseEntity.ok(pacienteService.listarPacientesComClinicas());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
-    // ✅ BUSCAR PACIENTE POR ID
+    // ✅ BUSCAR PACIENTE POR ID (Incluindo Clínicas)
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPacientePorId(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(pacienteService.buscarPacientePorId(id));
+            return ResponseEntity.ok(pacienteService.buscarPacientePorIdComClinicas(id));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: " + e.getMessage());
         }
@@ -71,6 +77,7 @@ public class PacienteController {
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarPaciente(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
+            // 🔍 Validação dos campos obrigatórios
             if (!payload.containsKey("nome") || !payload.containsKey("idade") ||
                 !payload.containsKey("telefone") || !payload.containsKey("endereco") ||
                 !payload.containsKey("clinicaIds")) {
@@ -84,6 +91,7 @@ public class PacienteController {
                 (String) payload.get("endereco")
             );
 
+            // 🔍 Convertendo lista de clinicas para Set<Long>
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
             if (clinicaIdsList == null || clinicaIdsList.isEmpty()) {
                 return ResponseEntity.badRequest().body("Erro: O paciente deve estar associado a pelo menos uma clínica.");
