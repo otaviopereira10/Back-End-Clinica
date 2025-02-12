@@ -26,6 +26,7 @@ public class PacienteService {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
+        // 🔥 Validação: Verificar se todas as clínicas existem antes de salvar o paciente
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -33,17 +34,16 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
-        // 🔥 Primeiro, salva o paciente para gerar um ID
+        // 🔥 Primeiro, salva o paciente no banco de dados para garantir que tenha um ID válido
         paciente = pacienteRepository.save(paciente);
 
-        // 🔥 Associa as clínicas ao paciente e o paciente às clínicas
+        // 🔥 Agora associa o paciente às clínicas e vice-versa
         paciente.setClinicas(clinicas);
         for (Clinica clinica : clinicas) {
             clinica.getPacientes().add(paciente);
-            clinicaRepository.save(clinica);
+            clinicaRepository.save(clinica); // 🔥 Atualiza a relação no banco
         }
 
-        // 🔥 Atualiza e salva o paciente com a relação ManyToMany
         return pacienteRepository.save(paciente);
     }
 
@@ -67,6 +67,7 @@ public class PacienteService {
         pacienteExistente.setTelefone(pacienteAtualizado.getTelefone());
         pacienteExistente.setEndereco(pacienteAtualizado.getEndereco());
 
+        // 🔥 Verifica se as clínicas existem antes de atualizar
         Set<Clinica> clinicas = new HashSet<>();
         for (Long clinicaId : clinicaIds) {
             Clinica clinica = clinicaRepository.findById(clinicaId)
@@ -74,7 +75,12 @@ public class PacienteService {
             clinicas.add(clinica);
         }
 
+        // 🔥 Atualiza as clínicas associadas ao paciente
         pacienteExistente.setClinicas(clinicas);
+        for (Clinica clinica : clinicas) {
+            clinica.getPacientes().add(pacienteExistente);
+            clinicaRepository.save(clinica);
+        }
 
         return pacienteRepository.save(pacienteExistente);
     }
@@ -83,6 +89,7 @@ public class PacienteService {
     public void deletarPaciente(Long id) {
         Paciente paciente = buscarPacientePorId(id);
         
+        // 🔥 Remove o paciente das clínicas antes de deletá-lo
         for (Clinica clinica : paciente.getClinicas()) {
             clinica.getPacientes().remove(paciente);
             clinicaRepository.save(clinica);
