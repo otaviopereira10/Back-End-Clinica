@@ -24,12 +24,13 @@ public class Paciente {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @ManyToMany
     @JoinTable(
         name = "paciente_clinica",
         joinColumns = @JoinColumn(name = "paciente_id"),
         inverseJoinColumns = @JoinColumn(name = "clinica_id")
     )
+    
     private Set<Clinica> clinicas = new HashSet<>();
 
     public Paciente() {}

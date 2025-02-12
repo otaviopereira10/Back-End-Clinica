@@ -12,7 +12,7 @@ public class Clinica {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String nome;
 
     @Column(nullable = false, length = 255)
@@ -21,7 +21,12 @@ public class Clinica {
     @ManyToMany(mappedBy = "clinicas")
     private Set<Paciente> pacientes = new HashSet<>();
 
-    @ManyToMany(mappedBy = "clinicas")
+    @ManyToMany
+    @JoinTable(
+        name = "clinica_profissional",
+        joinColumns = @JoinColumn(name = "clinica_id"),
+        inverseJoinColumns = @JoinColumn(name = "profissional_id")
+    )
     private Set<Profissional> profissionais = new HashSet<>();
 
     public Clinica() {}
