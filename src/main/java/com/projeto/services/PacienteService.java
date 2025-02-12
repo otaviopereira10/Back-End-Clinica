@@ -44,14 +44,11 @@ public class PacienteService {
     public List<Paciente> listarPacientes() {
         List<Paciente> pacientes = pacienteRepository.findAll();
 
-        // ✅ Força o carregamento das clínicas associadas (Lazy Loading)
-        for (Paciente p : pacientes) {
-            p.getClinicas().size(); // Hibernate carrega a lista de clínicas
-        }
+        // 🔥 Força o carregamento das clínicas associadas (se o @EntityGraph não estiver funcionando)
+        pacientes.forEach(paciente -> paciente.getClinicas().size());
 
         return pacientes;
     }
-
     @Transactional(readOnly = true)
     public Paciente buscarPacientePorId(Long id) {
         Paciente paciente = pacienteRepository.findById(id)
