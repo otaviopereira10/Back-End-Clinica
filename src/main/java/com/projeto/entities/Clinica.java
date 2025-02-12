@@ -3,9 +3,11 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "clinicas")
+@JsonIgnoreProperties({"pacientes", "profissionais"})
 public class Clinica {
 
     @Id
