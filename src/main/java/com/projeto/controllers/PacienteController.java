@@ -19,13 +19,11 @@ public class PacienteController {
     @Autowired
     private PacienteService pacienteService;
 
-    // ✅ Buscar todos os pacientes carregando clínicas
     @GetMapping
     public ResponseEntity<List<Paciente>> listarPacientes() {
         return ResponseEntity.ok(pacienteService.listarPacientes());
     }
 
-    // ✅ Buscar um paciente por ID carregando clínicas
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPacientePorId(@PathVariable Long id) {
         try {
@@ -38,25 +36,25 @@ public class PacienteController {
     @PostMapping
     public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
         try {
+            // Validando campos obrigatórios
             if (!payload.containsKey("nome") || !payload.containsKey("idade") ||
                 !payload.containsKey("telefone") || !payload.containsKey("endereco") ||
                 !payload.containsKey("clinicaIds")) {
                 return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
             }
 
-            Paciente paciente = new Paciente(
-                (String) payload.get("nome"),
-                (int) payload.get("idade"),
-                (String) payload.get("telefone"),
-                (String) payload.get("endereco")
-            );
+            // Convertendo valores corretamente
+            String nome = (String) payload.get("nome");
+            int idade = ((Number) payload.get("idade")).intValue();  // ✅ Conversão segura
+            String telefone = (String) payload.get("telefone");
+            String endereco = (String) payload.get("endereco");
 
+            Paciente paciente = new Paciente(nome, idade, telefone, endereco);
+
+            // Convertendo lista de IDs de clínicas corretamente
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
-            if (clinicaIdsList == null || clinicaIdsList.isEmpty()) {
-                return ResponseEntity.badRequest().body("Erro: O paciente deve estar associado a pelo menos uma clínica.");
-            }
             Set<Long> clinicaIds = clinicaIdsList.stream()
-                .map(cId -> Long.valueOf(cId.toString()))
+                .map(id -> ((Number) id).longValue()) // ✅ Garante conversão correta para Long
                 .collect(Collectors.toSet());
 
             Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente, clinicaIds);
@@ -75,19 +73,16 @@ public class PacienteController {
                 return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
             }
 
-            Paciente paciente = new Paciente(
-                (String) payload.get("nome"),
-                (int) payload.get("idade"),
-                (String) payload.get("telefone"),
-                (String) payload.get("endereco")
-            );
+            String nome = (String) payload.get("nome");
+            int idade = ((Number) payload.get("idade")).intValue();
+            String telefone = (String) payload.get("telefone");
+            String endereco = (String) payload.get("endereco");
+
+            Paciente paciente = new Paciente(nome, idade, telefone, endereco);
 
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
-            if (clinicaIdsList == null || clinicaIdsList.isEmpty()) {
-                return ResponseEntity.badRequest().body("Erro: O paciente deve estar associado a pelo menos uma clínica.");
-            }
             Set<Long> clinicaIds = clinicaIdsList.stream()
-                .map(cId -> Long.valueOf(cId.toString()))
+                .map(ids -> ((Number) id).longValue())
                 .collect(Collectors.toSet());
 
             Paciente pacienteAtualizado = pacienteService.atualizarPaciente(id, paciente, clinicaIds);

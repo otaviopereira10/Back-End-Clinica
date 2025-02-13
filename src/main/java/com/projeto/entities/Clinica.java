@@ -3,13 +3,12 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "clinicas")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Evita loops
 public class Clinica {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,20 +19,15 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany(mappedBy = "clinicas", fetch = FetchType.EAGER) // ✅ Agora carrega os profissionais e pacientes
+    // 🔹 Evita referência cíclica
+    @JsonBackReference
+    @ManyToMany(mappedBy = "clinicas")
     private Set<Paciente> pacientes = new HashSet<>();
 
-    @ManyToMany(mappedBy = "clinicas", fetch = FetchType.EAGER) 
+    @JsonBackReference
+    @ManyToMany(mappedBy = "clinicas")
     private Set<Profissional> profissionais = new HashSet<>();
 
-    public Clinica() {}
-
-    public Clinica(String nome, String endereco) {
-        this.nome = nome;
-        this.endereco = endereco;
-    }
-
-    // ✅ Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/profissionais")
@@ -21,21 +22,28 @@ public class ProfissionalController {
     @PostMapping
     public ResponseEntity<?> cadastrarProfissional(@RequestBody Map<String, Object> payload) {
         try {
-            Profissional profissional = new Profissional(
-                (String) payload.get("nome"),
-                (String) payload.get("especialidade"),
-                (String) payload.get("registro"),
-                (String) payload.get("telefone")
-            );
+            if (!payload.containsKey("nome") || !payload.containsKey("especialidade") ||
+                !payload.containsKey("registro") || !payload.containsKey("telefone") ||
+                !payload.containsKey("clinicaIds")) {
+                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
+            }
 
-            Set<Long> clinicaIds = ((List<Integer>) payload.get("clinicaIds")).stream()
-                .map(Long::valueOf)
-                .collect(java.util.stream.Collectors.toSet());
+            String nome = (String) payload.get("nome");
+            String especialidade = (String) payload.get("especialidade");
+            String registro = (String) payload.get("registro");
+            String telefone = (String) payload.get("telefone");
+
+            Profissional profissional = new Profissional(nome, especialidade, registro, telefone);
+
+            List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
+            Set<Long> clinicaIds = clinicaIdsList.stream()
+                .map(id -> ((Number) id).longValue()) // ✅ Corrigido
+                .collect(Collectors.toSet());
 
             profissionalService.cadastrarProfissional(profissional, clinicaIds);
             return ResponseEntity.status(HttpStatus.CREATED).body("Profissional cadastrado com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar profissional: " + e.getMessage());
         }
     }
 
@@ -48,29 +56,36 @@ public class ProfissionalController {
     public ResponseEntity<?> buscarProfissionalPorId(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(profissionalService.buscarProfissionalPorId(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: " + e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarProfissional(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
-            Profissional profissional = new Profissional(
-                (String) payload.get("nome"),
-                (String) payload.get("especialidade"),
-                (String) payload.get("registro"),
-                (String) payload.get("telefone")
-            );
+            if (!payload.containsKey("nome") || !payload.containsKey("especialidade") ||
+                !payload.containsKey("registro") || !payload.containsKey("telefone") ||
+                !payload.containsKey("clinicaIds")) {
+                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
+            }
 
-            Set<Long> clinicaIds = ((List<Integer>) payload.get("clinicaIds")).stream()
-                .map(Long::valueOf)
-                .collect(java.util.stream.Collectors.toSet());
+            String nome = (String) payload.get("nome");
+            String especialidade = (String) payload.get("especialidade");
+            String registro = (String) payload.get("registro");
+            String telefone = (String) payload.get("telefone");
+
+            Profissional profissional = new Profissional(nome, especialidade, registro, telefone);
+
+            List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
+            Set<Long> clinicaIds = clinicaIdsList.stream()
+                .map(ids -> ((Number) id).longValue())
+                .collect(Collectors.toSet());
 
             profissionalService.atualizarProfissional(id, profissional, clinicaIds);
             return ResponseEntity.ok("Profissional atualizado com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao atualizar profissional: " + e.getMessage());
         }
     }
 
@@ -79,8 +94,8 @@ public class ProfissionalController {
         try {
             profissionalService.deletarProfissional(id);
             return ResponseEntity.ok("Profissional removido com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao deletar profissional: " + e.getMessage());
         }
     }
 }
