@@ -1,15 +1,14 @@
 package com.projeto.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "clinicas")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Evita problemas na serialização
 public class Clinica {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,12 +19,12 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany(mappedBy = "clinicas") 
-    @JsonIgnoreProperties("clinicas") // Evita referência cíclica
+    @ManyToMany(mappedBy = "clinicas")
+    @JsonBackReference // ✅ Evita referência cíclica
     private Set<Paciente> pacientes = new HashSet<>();
 
     @ManyToMany(mappedBy = "clinicas")
-    @JsonIgnoreProperties("clinicas") // Evita referência cíclica
+    @JsonBackReference // ✅ Evita referência cíclica
     private Set<Profissional> profissionais = new HashSet<>();
 
     public Clinica() {}
@@ -35,7 +34,7 @@ public class Clinica {
         this.endereco = endereco;
     }
 
-    // Getters e Setters
+    // ✅ Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

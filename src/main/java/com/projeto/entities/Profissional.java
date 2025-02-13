@@ -1,9 +1,9 @@
 package com.projeto.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "profissionais")
@@ -31,7 +31,7 @@ public class Profissional {
         joinColumns = @JoinColumn(name = "profissional_id"),
         inverseJoinColumns = @JoinColumn(name = "clinica_id")
     )
-    @JsonManagedReference // ✅ Garante que ao buscar um Profissional, as Clínicas aparecem no JSON
+    @JsonManagedReference // ✅ Permite que Clínicas sejam carregadas corretamente
     private Set<Clinica> clinicas = new HashSet<>();
 
     public Profissional() {}
@@ -43,6 +43,7 @@ public class Profissional {
         this.telefone = telefone;
     }
 
+    // ✅ Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
