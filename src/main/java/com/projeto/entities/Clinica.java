@@ -1,6 +1,6 @@
 package com.projeto.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,11 +20,11 @@ public class Clinica {
     private String endereco;
 
     @ManyToMany(mappedBy = "clinicas")
-    @JsonBackReference("paciente-clinica")  // 🔹 Nomeando corretamente para Paciente
+    @JsonIgnore  // ✅ Evita loop na serialização
     private Set<Paciente> pacientes = new HashSet<>();
 
     @ManyToMany(mappedBy = "clinicas")
-    @JsonBackReference("profissional-clinica")  // 🔹 Nomeando corretamente para Profissional
+    @JsonIgnore  // ✅ Evita loop na serialização
     private Set<Profissional> profissionais = new HashSet<>();
 
     public Clinica() {}
