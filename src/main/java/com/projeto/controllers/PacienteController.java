@@ -36,43 +36,6 @@ public class PacienteController {
     @PostMapping
     public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
         try {
-            // Validando campos obrigatórios
-            if (!payload.containsKey("nome") || !payload.containsKey("idade") ||
-                !payload.containsKey("telefone") || !payload.containsKey("endereco") ||
-                !payload.containsKey("clinicaIds")) {
-                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
-            }
-
-            // Convertendo valores corretamente
-            String nome = (String) payload.get("nome");
-            int idade = ((Number) payload.get("idade")).intValue();  // ✅ Conversão segura
-            String telefone = (String) payload.get("telefone");
-            String endereco = (String) payload.get("endereco");
-
-            Paciente paciente = new Paciente(nome, idade, telefone, endereco);
-
-            // Convertendo lista de IDs de clínicas corretamente
-            List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
-            Set<Long> clinicaIds = clinicaIdsList.stream()
-                .map(id -> ((Number) id).longValue()) // ✅ Garante conversão correta para Long
-                .collect(Collectors.toSet());
-
-            Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente, clinicaIds);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoPaciente);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar paciente: " + e.getMessage());
-        }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarPaciente(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
-        try {
-            if (!payload.containsKey("nome") || !payload.containsKey("idade") ||
-                !payload.containsKey("telefone") || !payload.containsKey("endereco") ||
-                !payload.containsKey("clinicaIds")) {
-                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
-            }
-
             String nome = (String) payload.get("nome");
             int idade = ((Number) payload.get("idade")).intValue();
             String telefone = (String) payload.get("telefone");
@@ -82,23 +45,13 @@ public class PacienteController {
 
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
             Set<Long> clinicaIds = clinicaIdsList.stream()
-                .map(ids -> ((Number) id).longValue())
+                .map(id -> ((Number) id).longValue())
                 .collect(Collectors.toSet());
 
-            Paciente pacienteAtualizado = pacienteService.atualizarPaciente(id, paciente, clinicaIds);
-            return ResponseEntity.ok(pacienteAtualizado);
+            Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente, clinicaIds);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoPaciente);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao atualizar paciente: " + e.getMessage());
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletarPaciente(@PathVariable Long id) {
-        try {
-            pacienteService.deletarPaciente(id);
-            return ResponseEntity.ok("Paciente removido com sucesso!");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao deletar paciente: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar paciente: " + e.getMessage());
         }
     }
 }

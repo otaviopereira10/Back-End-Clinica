@@ -8,9 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,8 +28,8 @@ public class PacienteService {
 
     // ✅ Buscar um paciente por ID garantindo que suas clínicas sejam carregadas
     public Paciente buscarPacientePorId(Long id) {
-        Optional<Paciente> paciente = pacienteRepository.findByIdWithClinicas(id);
-        return paciente.orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
+        return pacienteRepository.findByIdWithClinicas(id)
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
     }
 
     @Transactional
@@ -40,21 +38,18 @@ public class PacienteService {
             throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
-        // Busca todas as clínicas no banco
-        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds).stream().collect(Collectors.toSet());
+        // Busca as clínicas e verifica se todas existem
+        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
+                .stream()
+                .collect(Collectors.toSet());
 
-        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
-            throw new RuntimeException("Erro: Uma ou mais clínicas informadas não existem.");
+        if (clinicas.size() != clinicaIds.size()) {
+            throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
         }
 
-        // Salva primeiro o paciente sem clínicas
-        Paciente novoPaciente = pacienteRepository.save(paciente);
-
-        // Associa clínicas ao paciente e salva novamente
-        novoPaciente.setClinicas(clinicas);
-        return pacienteRepository.save(novoPaciente);
+        paciente.setClinicas(clinicas);
+        return pacienteRepository.save(paciente);
     }
-
 
     @Transactional
     public Paciente atualizarPaciente(Long id, Paciente pacienteAtualizado, Set<Long> clinicaIds) {
@@ -65,11 +60,13 @@ public class PacienteService {
         pacienteExistente.setTelefone(pacienteAtualizado.getTelefone());
         pacienteExistente.setEndereco(pacienteAtualizado.getEndereco());
 
-        Set<Clinica> clinicas = new HashSet<>();
-        for (Long clinicaId : clinicaIds) {
-            Clinica clinica = clinicaRepository.findById(clinicaId)
-                    .orElseThrow(() -> new RuntimeException("Erro: Clínica com ID " + clinicaId + " não encontrada."));
-            clinicas.add(clinica);
+        // Atualiza as clínicas associadas
+        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
+                .stream()
+                .collect(Collectors.toSet());
+
+        if (clinicas.size() != clinicaIds.size()) {
+            throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
         }
 
         pacienteExistente.setClinicas(clinicas);
@@ -79,12 +76,7 @@ public class PacienteService {
     @Transactional
     public void deletarPaciente(Long id) {
         Paciente paciente = buscarPacientePorId(id);
-
-        for (Clinica clinica : paciente.getClinicas()) {
-            clinica.getPacientes().remove(paciente);
-            clinicaRepository.save(clinica);
-        }
-
+        paciente.getClinicas().forEach(clinica -> clinica.getPacientes().remove(paciente));
         pacienteRepository.delete(paciente);
     }
 }

@@ -19,15 +19,11 @@ public class ProfissionalController {
     @Autowired
     private ProfissionalService profissionalService;
 
+    // ✅ Cadastrar Profissional com Clínicas Associadas
     @PostMapping
     public ResponseEntity<?> cadastrarProfissional(@RequestBody Map<String, Object> payload) {
         try {
-            if (!payload.containsKey("nome") || !payload.containsKey("especialidade") ||
-                !payload.containsKey("registro") || !payload.containsKey("telefone") ||
-                !payload.containsKey("clinicaIds")) {
-                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
-            }
-
+            // Captura os dados do JSON corretamente
             String nome = (String) payload.get("nome");
             String especialidade = (String) payload.get("especialidade");
             String registro = (String) payload.get("registro");
@@ -37,21 +33,23 @@ public class ProfissionalController {
 
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
             Set<Long> clinicaIds = clinicaIdsList.stream()
-                .map(id -> ((Number) id).longValue()) // ✅ Corrigido
+                .map(id -> ((Number) id).longValue())
                 .collect(Collectors.toSet());
 
-            profissionalService.cadastrarProfissional(profissional, clinicaIds);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Profissional cadastrado com sucesso!");
+            Profissional novoProfissional = profissionalService.cadastrarProfissional(profissional, clinicaIds);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoProfissional);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar profissional: " + e.getMessage());
         }
     }
 
+    // ✅ Listar Todos os Profissionais
     @GetMapping
     public ResponseEntity<List<Profissional>> listarProfissionais() {
         return ResponseEntity.ok(profissionalService.listarProfissionais());
     }
 
+    // ✅ Buscar Profissional por ID
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarProfissionalPorId(@PathVariable Long id) {
         try {
@@ -61,34 +59,30 @@ public class ProfissionalController {
         }
     }
 
+    // ✅ Atualizar Profissional com Clínicas Associadas
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarProfissional(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
-            if (!payload.containsKey("nome") || !payload.containsKey("especialidade") ||
-                !payload.containsKey("registro") || !payload.containsKey("telefone") ||
-                !payload.containsKey("clinicaIds")) {
-                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios!");
-            }
-
             String nome = (String) payload.get("nome");
             String especialidade = (String) payload.get("especialidade");
             String registro = (String) payload.get("registro");
             String telefone = (String) payload.get("telefone");
 
-            Profissional profissional = new Profissional(nome, especialidade, registro, telefone);
+            Profissional profissionalAtualizado = new Profissional(nome, especialidade, registro, telefone);
 
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
             Set<Long> clinicaIds = clinicaIdsList.stream()
                 .map(ids -> ((Number) id).longValue())
                 .collect(Collectors.toSet());
 
-            profissionalService.atualizarProfissional(id, profissional, clinicaIds);
-            return ResponseEntity.ok("Profissional atualizado com sucesso!");
+            Profissional profissional = profissionalService.atualizarProfissional(id, profissionalAtualizado, clinicaIds);
+            return ResponseEntity.ok(profissional);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao atualizar profissional: " + e.getMessage());
         }
     }
 
+    // ✅ Deletar Profissional
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletarProfissional(@PathVariable Long id) {
         try {
