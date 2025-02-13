@@ -19,11 +19,36 @@ public class PacienteController {
     @Autowired
     private PacienteService pacienteService;
 
+    // ✅ Cadastrar Paciente com Clínicas Associadas
+    @PostMapping
+    public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
+        try {
+            String nome = (String) payload.get("nome");
+            int idade = ((Number) payload.get("idade")).intValue();
+            String telefone = (String) payload.get("telefone");
+            String endereco = (String) payload.get("endereco");
+
+            Paciente paciente = new Paciente(nome, idade, telefone, endereco);
+
+            List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
+            Set<Long> clinicaIds = clinicaIdsList.stream()
+                    .map(id -> ((Number) id).longValue())
+                    .collect(Collectors.toSet());
+
+            Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente, clinicaIds);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoPaciente);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar paciente: " + e.getMessage());
+        }
+    }
+
+    // ✅ Listar Todos os Pacientes
     @GetMapping
     public ResponseEntity<List<Paciente>> listarPacientes() {
         return ResponseEntity.ok(pacienteService.listarPacientes());
     }
 
+    // ✅ Buscar Paciente por ID
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPacientePorId(@PathVariable Long id) {
         try {
@@ -33,23 +58,37 @@ public class PacienteController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
+    // ✅ Atualizar Paciente com Clínicas Associadas
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarPaciente(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
-            Paciente paciente = new Paciente(
-                (String) payload.get("nome"),
-                ((Number) payload.get("idade")).intValue(),
-                (String) payload.get("telefone"),
-                (String) payload.get("endereco")
-            );
+            String nome = (String) payload.get("nome");
+            int idade = ((Number) payload.get("idade")).intValue();
+            String telefone = (String) payload.get("telefone");
+            String endereco = (String) payload.get("endereco");
 
-            Set<Long> clinicaIds = ((List<?>) payload.get("clinicaIds")).stream()
-                .map(id -> ((Number) id).longValue())
-                .collect(Collectors.toSet());
+            Paciente pacienteAtualizado = new Paciente(nome, idade, telefone, endereco);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(pacienteService.cadastrarPaciente(paciente, clinicaIds));
+            List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
+            Set<Long> clinicaIds = clinicaIdsList.stream()
+                    .map(clinicaId -> ((Number) clinicaId).longValue())
+                    .collect(Collectors.toSet());
+
+            Paciente paciente = pacienteService.atualizarPaciente(id, pacienteAtualizado, clinicaIds);
+            return ResponseEntity.ok(paciente);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar paciente: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao atualizar paciente: " + e.getMessage());
+        }
+    }
+
+    // ✅ Deletar Paciente
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletarPaciente(@PathVariable Long id) {
+        try {
+            pacienteService.deletarPaciente(id);
+            return ResponseEntity.ok("Paciente removido com sucesso!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao deletar paciente: " + e.getMessage());
         }
     }
 }
