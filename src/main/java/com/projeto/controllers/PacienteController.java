@@ -36,20 +36,18 @@ public class PacienteController {
     @PostMapping
     public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
         try {
-            String nome = (String) payload.get("nome");
-            int idade = ((Number) payload.get("idade")).intValue();
-            String telefone = (String) payload.get("telefone");
-            String endereco = (String) payload.get("endereco");
+            Paciente paciente = new Paciente(
+                (String) payload.get("nome"),
+                ((Number) payload.get("idade")).intValue(),
+                (String) payload.get("telefone"),
+                (String) payload.get("endereco")
+            );
 
-            Paciente paciente = new Paciente(nome, idade, telefone, endereco);
-
-            List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
-            Set<Long> clinicaIds = clinicaIdsList.stream()
+            Set<Long> clinicaIds = ((List<?>) payload.get("clinicaIds")).stream()
                 .map(id -> ((Number) id).longValue())
                 .collect(Collectors.toSet());
 
-            Paciente novoPaciente = pacienteService.cadastrarPaciente(paciente, clinicaIds);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoPaciente);
+            return ResponseEntity.status(HttpStatus.CREATED).body(pacienteService.cadastrarPaciente(paciente, clinicaIds));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar paciente: " + e.getMessage());
         }

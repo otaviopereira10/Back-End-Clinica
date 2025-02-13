@@ -21,29 +21,24 @@ public class PacienteService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
-    // ✅ Buscar todos os pacientes com clínicas associadas
+    // ✅ Buscar todos os pacientes
     public List<Paciente> listarPacientes() {
         return pacienteRepository.findAll();
     }
 
-    // ✅ Buscar um paciente por ID garantindo que suas clínicas sejam carregadas
+    // ✅ Buscar paciente por ID
     public Paciente buscarPacientePorId(Long id) {
-        return pacienteRepository.findByIdWithClinicas(id)
+        return pacienteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
     }
 
+    // ✅ Cadastrar paciente com clínicas associadas
     @Transactional
     public Paciente cadastrarPaciente(Paciente paciente, Set<Long> clinicaIds) {
-        if (clinicaIds.isEmpty()) {
-            throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
-        }
-
-        // Busca as clínicas e verifica se todas existem
         Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream()
-                .collect(Collectors.toSet());
+                .stream().collect(Collectors.toSet());
 
-        if (clinicas.size() != clinicaIds.size()) {
+        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
             throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
         }
 
@@ -51,6 +46,7 @@ public class PacienteService {
         return pacienteRepository.save(paciente);
     }
 
+    // ✅ Atualizar paciente e suas clínicas
     @Transactional
     public Paciente atualizarPaciente(Long id, Paciente pacienteAtualizado, Set<Long> clinicaIds) {
         Paciente pacienteExistente = buscarPacientePorId(id);
@@ -60,12 +56,10 @@ public class PacienteService {
         pacienteExistente.setTelefone(pacienteAtualizado.getTelefone());
         pacienteExistente.setEndereco(pacienteAtualizado.getEndereco());
 
-        // Atualiza as clínicas associadas
         Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream()
-                .collect(Collectors.toSet());
+                .stream().collect(Collectors.toSet());
 
-        if (clinicas.size() != clinicaIds.size()) {
+        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
             throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
         }
 
@@ -73,10 +67,16 @@ public class PacienteService {
         return pacienteRepository.save(pacienteExistente);
     }
 
+    // ✅ Deletar paciente e remover vínculo com clínicas
     @Transactional
     public void deletarPaciente(Long id) {
         Paciente paciente = buscarPacientePorId(id);
-        paciente.getClinicas().forEach(clinica -> clinica.getPacientes().remove(paciente));
+
+        for (Clinica clinica : paciente.getClinicas()) {
+            clinica.getPacientes().remove(paciente);
+            clinicaRepository.save(clinica);
+        }
+
         pacienteRepository.delete(paciente);
     }
 }

@@ -21,16 +21,28 @@ public class ProfissionalService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
-    // ✅ Cadastrar Profissional com Clínicas Associadas
+    // ✅ Listar todos os profissionais
+    public List<Profissional> listarProfissionais() {
+        return profissionalRepository.findAll();
+    }
+
+    // ✅ Buscar um profissional por ID
+    public Profissional buscarProfissionalPorId(Long id) {
+        return profissionalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Erro: Profissional não encontrado!"));
+    }
+
+    // ✅ Cadastrar profissional com clínicas associadas
     @Transactional
     public Profissional cadastrarProfissional(Profissional profissional, Set<Long> clinicaIds) {
+        // Verifica se o registro já existe
         if (profissionalRepository.findByRegistro(profissional.getRegistro()).isPresent()) {
             throw new RuntimeException("Erro: Registro já cadastrado!");
         }
 
+        // Busca as clínicas e verifica se todas existem
         Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream()
-                .collect(Collectors.toSet());
+                .stream().collect(Collectors.toSet());
 
         if (clinicas.size() != clinicaIds.size()) {
             throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
@@ -40,18 +52,7 @@ public class ProfissionalService {
         return profissionalRepository.save(profissional);
     }
 
-    // ✅ Listar Todos os Profissionais
-    public List<Profissional> listarProfissionais() {
-        return profissionalRepository.findAll();
-    }
-
-    // ✅ Buscar Profissional por ID com Clínicas
-    public Profissional buscarProfissionalPorId(Long id) {
-        return profissionalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Erro: Profissional não encontrado!"));
-    }
-
-    // ✅ Atualizar Profissional com Clínicas Associadas
+    // ✅ Atualizar profissional e suas clínicas
     @Transactional
     public Profissional atualizarProfissional(Long id, Profissional profissionalAtualizado, Set<Long> clinicaIds) {
         Profissional profissionalExistente = buscarProfissionalPorId(id);
@@ -61,26 +62,29 @@ public class ProfissionalService {
         profissionalExistente.setRegistro(profissionalAtualizado.getRegistro());
         profissionalExistente.setTelefone(profissionalAtualizado.getTelefone());
 
-        // ✅ Atualiza as clínicas associadas
+        // Atualiza as clínicas associadas
         Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream()
-                .collect(Collectors.toSet());
+                .stream().collect(Collectors.toSet());
 
         if (clinicas.size() != clinicaIds.size()) {
             throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
         }
 
         profissionalExistente.setClinicas(clinicas);
+
         return profissionalRepository.save(profissionalExistente);
     }
 
-    // ✅ Deletar Profissional e Remover Referências em Clínicas
+    // ✅ Deletar profissional e remover vínculo com clínicas
     @Transactional
     public void deletarProfissional(Long id) {
         Profissional profissional = buscarProfissionalPorId(id);
 
-        // Remove vínculos com clínicas antes de excluir
-        profissional.getClinicas().forEach(clinica -> clinica.getProfissionais().remove(profissional));
+        // Remove vínculo com clínicas antes de excluir
+        for (Clinica clinica : profissional.getClinicas()) {
+            clinica.getProfissionais().remove(profissional);
+            clinicaRepository.save(clinica);
+        }
 
         profissionalRepository.delete(profissional);
     }

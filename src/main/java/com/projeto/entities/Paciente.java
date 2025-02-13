@@ -3,7 +3,7 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "pacientes")
@@ -31,7 +31,7 @@ public class Paciente {
         joinColumns = @JoinColumn(name = "paciente_id"),
         inverseJoinColumns = @JoinColumn(name = "clinica_id")
     )
-    @JsonIgnore // ✅ Evita referência cíclica ao serializar JSON
+    @JsonManagedReference // ✅ Garante que ao buscar um Paciente, as Clínicas aparecem no JSON
     private Set<Clinica> clinicas = new HashSet<>();
 
     public Paciente() {}
@@ -43,7 +43,6 @@ public class Paciente {
         this.endereco = endereco;
     }
 
-    // ✅ Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
