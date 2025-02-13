@@ -19,11 +19,29 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
+    // Relação ManyToMany com Pacientes
     @ManyToMany(mappedBy = "clinicas") 
-    @JsonBackReference // ✅ Agora evita o loop ao serializar clínicas
+    @JsonBackReference
     private Set<Paciente> pacientes = new HashSet<>();
 
-    // Getters e Setters
+    // ✅ Nova relação ManyToMany com Profissionais
+    @ManyToMany
+    @JoinTable(
+        name = "profissional_clinica",
+        joinColumns = @JoinColumn(name = "clinica_id"),
+        inverseJoinColumns = @JoinColumn(name = "profissional_id")
+    )
+    @JsonBackReference
+    private Set<Profissional> profissionais = new HashSet<>();
+
+    public Clinica() {}
+
+    public Clinica(String nome, String endereco) {
+        this.nome = nome;
+        this.endereco = endereco;
+    }
+
+    // ✅ Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -35,4 +53,7 @@ public class Clinica {
 
     public Set<Paciente> getPacientes() { return pacientes; }
     public void setPacientes(Set<Paciente> pacientes) { this.pacientes = pacientes; }
+
+    public Set<Profissional> getProfissionais() { return profissionais; }
+    public void setProfissionais(Set<Profissional> profissionais) { this.profissionais = profissionais; }
 }
