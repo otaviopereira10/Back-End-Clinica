@@ -3,10 +3,11 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "profissionais")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Evita problemas com Lazy
 public class Profissional {
 
     @Id
@@ -25,9 +26,12 @@ public class Profissional {
     @Column(nullable = false, length = 20)
     private String telefone;
 
-    // Relação ManyToMany com Clínica
-    @ManyToMany(mappedBy = "profissionais")
-    @JsonManagedReference
+    @ManyToMany(fetch = FetchType.EAGER) // ✅ Agora carrega as clínicas automaticamente
+    @JoinTable(
+        name = "profissional_clinica",
+        joinColumns = @JoinColumn(name = "profissional_id"),
+        inverseJoinColumns = @JoinColumn(name = "clinica_id")
+    )
     private Set<Clinica> clinicas = new HashSet<>();
 
     public Profissional() {}

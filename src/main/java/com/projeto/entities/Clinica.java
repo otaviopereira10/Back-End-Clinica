@@ -3,10 +3,11 @@ package com.projeto.entities;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "clinicas")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Evita loops
 public class Clinica {
     
     @Id
@@ -19,19 +20,10 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    // Relação ManyToMany com Pacientes
-    @ManyToMany(mappedBy = "clinicas") 
-    @JsonBackReference
+    @ManyToMany(mappedBy = "clinicas", fetch = FetchType.EAGER) // ✅ Agora carrega os profissionais e pacientes
     private Set<Paciente> pacientes = new HashSet<>();
 
-    // ✅ Nova relação ManyToMany com Profissionais
-    @ManyToMany
-    @JoinTable(
-        name = "profissional_clinica",
-        joinColumns = @JoinColumn(name = "clinica_id"),
-        inverseJoinColumns = @JoinColumn(name = "profissional_id")
-    )
-    @JsonBackReference
+    @ManyToMany(mappedBy = "clinicas", fetch = FetchType.EAGER) 
     private Set<Profissional> profissionais = new HashSet<>();
 
     public Clinica() {}
