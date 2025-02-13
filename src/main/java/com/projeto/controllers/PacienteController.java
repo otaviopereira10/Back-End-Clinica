@@ -23,6 +23,13 @@ public class PacienteController {
     @PostMapping
     public ResponseEntity<?> cadastrarPaciente(@RequestBody Map<String, Object> payload) {
         try {
+            // 🔍 Verifica se todas as chaves obrigatórias estão presentes
+            if (!payload.containsKey("nome") || !payload.containsKey("idade") || 
+                !payload.containsKey("telefone") || !payload.containsKey("endereco") || 
+                !payload.containsKey("clinicaIds")) {
+                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios, incluindo clinicaIds.");
+            }
+
             String nome = (String) payload.get("nome");
             int idade = ((Number) payload.get("idade")).intValue();
             String telefone = (String) payload.get("telefone");
@@ -31,6 +38,10 @@ public class PacienteController {
             Paciente paciente = new Paciente(nome, idade, telefone, endereco);
 
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
+            if (clinicaIdsList == null || clinicaIdsList.isEmpty()) {
+                return ResponseEntity.badRequest().body("Erro: O paciente deve estar associado a pelo menos uma clínica.");
+            }
+
             Set<Long> clinicaIds = clinicaIdsList.stream()
                     .map(id -> ((Number) id).longValue())
                     .collect(Collectors.toSet());
@@ -62,6 +73,12 @@ public class PacienteController {
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarPaciente(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
+            if (!payload.containsKey("nome") || !payload.containsKey("idade") ||
+                !payload.containsKey("telefone") || !payload.containsKey("endereco") ||
+                !payload.containsKey("clinicaIds")) {
+                return ResponseEntity.badRequest().body("Erro: Todos os campos são obrigatórios, incluindo clinicaIds.");
+            }
+
             String nome = (String) payload.get("nome");
             int idade = ((Number) payload.get("idade")).intValue();
             String telefone = (String) payload.get("telefone");
@@ -70,6 +87,10 @@ public class PacienteController {
             Paciente pacienteAtualizado = new Paciente(nome, idade, telefone, endereco);
 
             List<?> clinicaIdsList = (List<?>) payload.get("clinicaIds");
+            if (clinicaIdsList == null || clinicaIdsList.isEmpty()) {
+                return ResponseEntity.badRequest().body("Erro: O paciente deve estar associado a pelo menos uma clínica.");
+            }
+
             Set<Long> clinicaIds = clinicaIdsList.stream()
                     .map(clinicaId -> ((Number) clinicaId).longValue())
                     .collect(Collectors.toSet());
