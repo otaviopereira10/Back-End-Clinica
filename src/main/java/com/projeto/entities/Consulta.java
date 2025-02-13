@@ -20,6 +20,10 @@ public class Consulta {
     @JoinColumn(name = "profissional_id", nullable = false)
     private Profissional profissional;
 
+    @ManyToOne
+    @JoinColumn(name = "clinica_id", nullable = false)
+    private Clinica clinica; // 🔥 Adicionando a relação com Clinica
+
     @Column(name = "data", nullable = false)
     private LocalDate data;
 
@@ -28,9 +32,10 @@ public class Consulta {
 
     public Consulta() {}
 
-    public Consulta(Paciente paciente, Profissional profissional, LocalDate data, LocalTime hora) {
+    public Consulta(Paciente paciente, Profissional profissional, Clinica clinica, LocalDate data, LocalTime hora) {
         this.paciente = paciente;
         this.profissional = profissional;
+        this.clinica = clinica;
         this.data = data;
         this.hora = hora;
     }
@@ -43,6 +48,9 @@ public class Consulta {
 
     public Profissional getProfissional() { return profissional; }
     public void setProfissional(Profissional profissional) { this.profissional = profissional; }
+
+    public Clinica getClinica() { return clinica; }
+    public void setClinica(Clinica clinica) { this.clinica = clinica; }
 
     public LocalDate getData() { return data; }
     public void setData(LocalDate data) { this.data = data; }

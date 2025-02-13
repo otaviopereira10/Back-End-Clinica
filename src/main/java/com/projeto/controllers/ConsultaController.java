@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/consultas")
@@ -15,21 +16,6 @@ public class ConsultaController {
 
     @Autowired
     private ConsultaService consultaService;
-
-    // ✅ Criar nova consulta
-    @PostMapping("/{pacienteId}/{profissionalId}")
-    public ResponseEntity<?> criarConsulta(
-        @PathVariable Long pacienteId,
-        @PathVariable Long profissionalId,
-        @RequestBody Consulta consulta
-    ) {
-        try {
-            consultaService.criarConsulta(pacienteId, profissionalId, consulta);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Consulta agendada com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro: " + e.getMessage());
-        }
-    }
 
     // ✅ Listar todas as consultas
     @GetMapping
@@ -42,35 +28,45 @@ public class ConsultaController {
     public ResponseEntity<?> buscarConsultaPorId(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(consultaService.buscarConsultaPorId(id));
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: " + e.getMessage());
         }
     }
 
-    // ✅ Atualizar consulta (CORRIGIDO PARA USAR pacienteId e profissionalId)
-    @PutMapping("/{id}/{pacienteId}/{profissionalId}")
+    // ✅ Cadastrar consulta
+    @PostMapping("/{pacienteId}/{profissionalId}/{clinicaId}")
+    public ResponseEntity<?> cadastrarConsulta(
+            @PathVariable Long pacienteId,
+            @PathVariable Long profissionalId,
+            @PathVariable Long clinicaId,
+            @RequestBody Consulta consulta) {
+        try {
+            Consulta novaConsulta = consultaService.cadastrarConsulta(pacienteId, profissionalId, clinicaId, consulta);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novaConsulta);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao cadastrar consulta: " + e.getMessage());
+        }
+    }
+
+    // ✅ Atualizar consulta
+    @PutMapping("/{id}/{pacienteId}/{profissionalId}/{clinicaId}")
     public ResponseEntity<?> atualizarConsulta(
-        @PathVariable Long id,
-        @PathVariable Long pacienteId,
-        @PathVariable Long profissionalId,
-        @RequestBody Consulta novaConsulta
-    ) {
+            @PathVariable Long id,
+            @PathVariable Long pacienteId,
+            @PathVariable Long profissionalId,
+            @PathVariable Long clinicaId,
+            @RequestBody Consulta consultaAtualizada) {
         try {
-            consultaService.atualizarConsulta(id, pacienteId, profissionalId, novaConsulta);
-            return ResponseEntity.ok("Consulta atualizada com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: " + e.getMessage());
+            return ResponseEntity.ok(consultaService.atualizarConsulta(id, pacienteId, profissionalId, clinicaId, consultaAtualizada));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro ao atualizar consulta: " + e.getMessage());
         }
     }
 
-    // ✅ Excluir consulta
+    // ✅ Deletar consulta
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> excluirConsulta(@PathVariable Long id) {
-        try {
-            consultaService.excluirConsulta(id);
-            return ResponseEntity.ok("Consulta excluída com sucesso!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: " + e.getMessage());
-        }
+    public ResponseEntity<?> deletarConsulta(@PathVariable Long id) {
+        consultaService.deletarConsulta(id);
+        return ResponseEntity.ok("Consulta removida com sucesso!");
     }
 }

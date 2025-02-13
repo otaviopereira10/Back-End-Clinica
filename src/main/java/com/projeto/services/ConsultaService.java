@@ -1,88 +1,89 @@
 package com.projeto.services;
 
+import com.projeto.entities.Clinica;
 import com.projeto.entities.Consulta;
 import com.projeto.entities.Paciente;
 import com.projeto.entities.Profissional;
+import com.projeto.repository.ClinicaRepository;
 import com.projeto.repository.ConsultaRepository;
 import com.projeto.repository.PacienteRepository;
 import com.projeto.repository.ProfissionalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class ConsultaService {
 
-    private final ConsultaRepository consultaRepository;
-    private final PacienteRepository pacienteRepository;
-    private final ProfissionalRepository profissionalRepository;
+    @Autowired
+    private ConsultaRepository consultaRepository;
 
     @Autowired
-    public ConsultaService(ConsultaRepository consultaRepository, PacienteRepository pacienteRepository, ProfissionalRepository profissionalRepository) {
-        this.consultaRepository = consultaRepository;
-        this.pacienteRepository = pacienteRepository;
-        this.profissionalRepository = profissionalRepository;
+    private PacienteRepository pacienteRepository;
+
+    @Autowired
+    private ProfissionalRepository profissionalRepository;
+
+    @Autowired
+    private ClinicaRepository clinicaRepository;
+
+    // ✅ Listar todas as consultas com seus relacionamentos carregados
+    public List<Consulta> listarConsultas() {
+        return consultaRepository.findAllWithRelations();
     }
 
-    // ✅ Criar uma nova consulta
-    public void criarConsulta(Long pacienteId, Long profissionalId, Consulta consulta) {
+    // ✅ Buscar uma consulta pelo ID
+    public Consulta buscarConsultaPorId(Long id) {
+        return consultaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Erro: Consulta não encontrada!"));
+    }
+
+    // ✅ Cadastrar uma consulta associada a Paciente, Profissional e Clínica
+    @Transactional
+    public Consulta cadastrarConsulta(Long pacienteId, Long profissionalId, Long clinicaId, Consulta consulta) {
         Paciente paciente = pacienteRepository.findById(pacienteId)
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
+                .orElseThrow(() -> new RuntimeException("Erro: Paciente não encontrado!"));
+
         Profissional profissional = profissionalRepository.findById(profissionalId)
-                .orElseThrow(() -> new RuntimeException("Profissional não encontrado!"));
+                .orElseThrow(() -> new RuntimeException("Erro: Profissional não encontrado!"));
+
+        Clinica clinica = clinicaRepository.findById(clinicaId)
+                .orElseThrow(() -> new RuntimeException("Erro: Clínica não encontrada!"));
 
         consulta.setPaciente(paciente);
         consulta.setProfissional(profissional);
-        consultaRepository.save(consulta);
+        consulta.setClinica(clinica);
+        return consultaRepository.save(consulta);
     }
 
-    // ✅ Listar todas as consultas
-    public List<Consulta> listarConsultas() {
-        return consultaRepository.findAll();
-    }
-
-    // ✅ Buscar consulta por ID
-    public Consulta buscarConsultaPorId(Long id) {
-        return consultaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Consulta não encontrada!"));
-    }
-
-    // ✅ Atualizar consulta (CORRIGIDO PARA SALVAR ALTERAÇÕES NO BANCO)
-    public void atualizarConsulta(Long id, Long pacienteId, Long profissionalId, Consulta novaConsulta) {
+    // ✅ Atualizar uma consulta
+    @Transactional
+    public Consulta atualizarConsulta(Long id, Long pacienteId, Long profissionalId, Long clinicaId, Consulta consultaAtualizada) {
         Consulta consultaExistente = buscarConsultaPorId(id);
 
-        // Atualiza data e hora
-        if (novaConsulta.getData() != null) {
-            consultaExistente.setData(novaConsulta.getData());
-        }
-        if (novaConsulta.getHora() != null) {
-            consultaExistente.setHora(novaConsulta.getHora());
-        }
+        Paciente paciente = pacienteRepository.findById(pacienteId)
+                .orElseThrow(() -> new RuntimeException("Erro: Paciente não encontrado!"));
 
-        // Atualiza paciente se fornecido
-        if (pacienteId != null) {
-            Paciente paciente = pacienteRepository.findById(pacienteId)
-                    .orElseThrow(() -> new RuntimeException("Paciente não encontrado!"));
-            consultaExistente.setPaciente(paciente);
-        }
+        Profissional profissional = profissionalRepository.findById(profissionalId)
+                .orElseThrow(() -> new RuntimeException("Erro: Profissional não encontrado!"));
 
-        // Atualiza profissional se fornecido
-        if (profissionalId != null) {
-            Profissional profissional = profissionalRepository.findById(profissionalId)
-                    .orElseThrow(() -> new RuntimeException("Profissional não encontrado!"));
-            consultaExistente.setProfissional(profissional);
-        }
+        Clinica clinica = clinicaRepository.findById(clinicaId)
+                .orElseThrow(() -> new RuntimeException("Erro: Clínica não encontrada!"));
 
-        // Salva no banco de dados
-        consultaRepository.save(consultaExistente);
+        consultaExistente.setPaciente(paciente);
+        consultaExistente.setProfissional(profissional);
+        consultaExistente.setClinica(clinica);
+        consultaExistente.setData(consultaAtualizada.getData());
+        consultaExistente.setHora(consultaAtualizada.getHora());
+
+        return consultaRepository.save(consultaExistente);
     }
 
-    // ✅ Excluir consulta
-    public void excluirConsulta(Long id) {
-        if (!consultaRepository.existsById(id)) {
-            throw new RuntimeException("Consulta não encontrada!");
-        }
+    // ✅ Deletar consulta
+    @Transactional
+    public void deletarConsulta(Long id) {
         consultaRepository.deleteById(id);
     }
 }
