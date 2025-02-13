@@ -1,13 +1,12 @@
 package com.projeto.entities;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "pacientes")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Evita erro de serialização
 public class Paciente {
 
     @Id
@@ -32,7 +31,8 @@ public class Paciente {
         joinColumns = @JoinColumn(name = "paciente_id"),
         inverseJoinColumns = @JoinColumn(name = "clinica_id")
     )
-    private Set<Clinica> clinicas = new HashSet<>(); // ✅ Relacionamento correto
+    @JsonManagedReference // ✅ Evita loop e permite que as clínicas apareçam ao buscar um paciente
+    private Set<Clinica> clinicas = new HashSet<>();
 
     public Paciente() {}
 
@@ -43,7 +43,7 @@ public class Paciente {
         this.endereco = endereco;
     }
 
-    // ✅ Getters e Setters
+    // ✅ Getters e Setters completos
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

@@ -43,6 +43,13 @@ public class PacienteService {
         }
 
         paciente.setClinicas(clinicas);
+
+        // ✅ Também adiciona o paciente na lista da clínica
+        for (Clinica clinica : clinicas) {
+            clinica.getPacientes().add(paciente);
+            clinicaRepository.save(clinica);
+        }
+
         return pacienteRepository.save(paciente);
     }
 

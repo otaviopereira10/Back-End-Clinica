@@ -21,7 +21,7 @@ public class ProfissionalService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
-    // ✅ Listar todos os profissionais
+    // ✅ Listar todos os profissionais com as clínicas associadas
     public List<Profissional> listarProfissionais() {
         return profissionalRepository.findAll();
     }
@@ -35,20 +35,25 @@ public class ProfissionalService {
     // ✅ Cadastrar profissional com clínicas associadas
     @Transactional
     public Profissional cadastrarProfissional(Profissional profissional, Set<Long> clinicaIds) {
-        // Verifica se o registro já existe
         if (profissionalRepository.findByRegistro(profissional.getRegistro()).isPresent()) {
             throw new RuntimeException("Erro: Registro já cadastrado!");
         }
 
-        // Busca as clínicas e verifica se todas existem
         Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
                 .stream().collect(Collectors.toSet());
 
-        if (clinicas.size() != clinicaIds.size()) {
+        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
             throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
         }
 
         profissional.setClinicas(clinicas);
+
+        // ✅ Também adiciona o profissional na lista da clínica
+        for (Clinica clinica : clinicas) {
+            clinica.getProfissionais().add(profissional);
+            clinicaRepository.save(clinica);
+        }
+
         return profissionalRepository.save(profissional);
     }
 
@@ -62,7 +67,6 @@ public class ProfissionalService {
         profissionalExistente.setRegistro(profissionalAtualizado.getRegistro());
         profissionalExistente.setTelefone(profissionalAtualizado.getTelefone());
 
-        // Atualiza as clínicas associadas
         Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
                 .stream().collect(Collectors.toSet());
 
@@ -80,7 +84,7 @@ public class ProfissionalService {
     public void deletarProfissional(Long id) {
         Profissional profissional = buscarProfissionalPorId(id);
 
-        // Remove vínculo com clínicas antes de excluir
+        // ✅ Remove vínculo com clínicas antes de excluir
         for (Clinica clinica : profissional.getClinicas()) {
             clinica.getProfissionais().remove(profissional);
             clinicaRepository.save(clinica);
