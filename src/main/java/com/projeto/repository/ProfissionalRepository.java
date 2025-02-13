@@ -16,7 +16,7 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, Long
     Optional<Profissional> findByRegistro(String registro);
 
     // ✅ Garante que ao buscar todos os profissionais, as clínicas também sejam carregadas
-    @EntityGraph(attributePaths = "clinicas")
+    @EntityGraph(attributePaths = "clinicas") // 🔥 Garante que as clínicas sejam carregadas no GET
     List<Profissional> findAll();
 
     // ✅ Busca profissional por ID e carrega as clínicas associadas

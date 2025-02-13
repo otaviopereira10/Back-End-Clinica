@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProfissionalService {
@@ -21,36 +22,34 @@ public class ProfissionalService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
-    // ✅ Listar todos os profissionais
+    // ✅ Listar todos os profissionais com suas clínicas associadas
     public List<Profissional> listarProfissionais() {
         return profissionalRepository.findAll();
     }
 
-    // ✅ Buscar um profissional por ID
+    // ✅ Buscar um profissional por ID com clínicas associadas
     public Profissional buscarProfissionalPorId(Long id) {
         return profissionalRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Erro: Profissional não encontrado!"));
     }
 
-    // ✅ Cadastrar profissional com clínicas associadas
+    // ✅ Cadastrar profissional e associar clínicas
     @Transactional
     public Profissional cadastrarProfissional(Profissional profissional, Set<Long> clinicaIds) {
         if (clinicaIds == null || clinicaIds.isEmpty()) {
             throw new RuntimeException("Erro: O profissional deve estar associado a pelo menos uma clínica.");
         }
 
-        // ✅ Busca as clínicas e verifica se todas existem
         Set<Clinica> clinicas = new HashSet<>(clinicaRepository.findAllById(clinicaIds));
 
         if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
             throw new RuntimeException("Erro: Uma ou mais clínicas informadas não existem.");
         }
 
-        // ✅ Associa clínicas ao profissional
         profissional.setClinicas(clinicas);
         Profissional novoProfissional = profissionalRepository.save(profissional);
 
-        // ✅ Atualiza as clínicas para garantir persistência da relação ManyToMany
+        // ✅ Atualiza a relação ManyToMany garantindo que a clínica também guarde o profissional
         for (Clinica clinica : clinicas) {
             clinica.getProfissionais().add(novoProfissional);
             clinicaRepository.save(clinica);
@@ -69,7 +68,6 @@ public class ProfissionalService {
         profissionalExistente.setRegistro(profissionalAtualizado.getRegistro());
         profissionalExistente.setTelefone(profissionalAtualizado.getTelefone());
 
-        // ✅ Atualiza as clínicas associadas
         Set<Clinica> clinicas = new HashSet<>(clinicaRepository.findAllById(clinicaIds));
 
         if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
@@ -80,12 +78,11 @@ public class ProfissionalService {
         return profissionalRepository.save(profissionalExistente);
     }
 
-    // ✅ Deletar profissional e remover vínculo com clínicas
+    // ✅ Deletar profissional e remover vínculos
     @Transactional
     public void deletarProfissional(Long id) {
         Profissional profissional = buscarProfissionalPorId(id);
 
-        // ✅ Remove vínculo com clínicas antes de excluir
         for (Clinica clinica : profissional.getClinicas()) {
             clinica.getProfissionais().remove(profissional);
             clinicaRepository.save(clinica);

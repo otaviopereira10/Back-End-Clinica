@@ -1,12 +1,13 @@
 package com.projeto.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "profissionais")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ Evita erros com Lazy Loading
 public class Profissional {
 
     @Id
@@ -25,13 +26,12 @@ public class Profissional {
     @Column(nullable = false, length = 20)
     private String telefone;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER) // 🔥 Agora carrega automaticamente as clínicas
     @JoinTable(
         name = "profissional_clinica",
         joinColumns = @JoinColumn(name = "profissional_id"),
         inverseJoinColumns = @JoinColumn(name = "clinica_id")
     )
-    @JsonIgnore  // ✅ Evita o loop na serialização
     private Set<Clinica> clinicas = new HashSet<>();
 
     public Profissional() {}

@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface PacienteRepository extends JpaRepository<Paciente, Long> {
 
     // ✅ Garante que ao buscar todos os pacientes, as clínicas também sejam carregadas
-    @EntityGraph(attributePaths = "clinicas")
+    @EntityGraph(attributePaths = "clinicas") // 🔥 Garante que as clínicas sejam carregadas no GET
     List<Paciente> findAll();
 
     // ✅ Busca paciente por ID e carrega as clínicas associadas
