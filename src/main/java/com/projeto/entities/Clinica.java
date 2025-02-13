@@ -19,22 +19,12 @@ public class Clinica {
     @Column(nullable = false, length = 255)
     private String endereco;
 
-    @ManyToMany
-    @JoinTable(
-        name = "paciente_clinica",
-        joinColumns = @JoinColumn(name = "clinica_id"),
-        inverseJoinColumns = @JoinColumn(name = "paciente_id")
-    )
-    @JsonBackReference // ✅ Evita loop ao serializar pacientes dentro de clínica
+    @ManyToMany(mappedBy = "clinicas")
+    @JsonBackReference("paciente-clinica")  // 🔹 Nomeando corretamente para Paciente
     private Set<Paciente> pacientes = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
-        name = "profissional_clinica",
-        joinColumns = @JoinColumn(name = "clinica_id"),
-        inverseJoinColumns = @JoinColumn(name = "profissional_id")
-    )
-    @JsonBackReference // ✅ Evita loop ao serializar profissionais dentro de clínica
+    @ManyToMany(mappedBy = "clinicas")
+    @JsonBackReference("profissional-clinica")  // 🔹 Nomeando corretamente para Profissional
     private Set<Profissional> profissionais = new HashSet<>();
 
     public Clinica() {}
