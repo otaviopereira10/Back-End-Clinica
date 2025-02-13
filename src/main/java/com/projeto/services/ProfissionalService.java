@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class ProfissionalService {
@@ -21,7 +21,7 @@ public class ProfissionalService {
     @Autowired
     private ClinicaRepository clinicaRepository;
 
-    // ✅ Listar todos os profissionais com as clínicas associadas
+    // ✅ Listar todos os profissionais
     public List<Profissional> listarProfissionais() {
         return profissionalRepository.findAll();
     }
@@ -35,26 +35,28 @@ public class ProfissionalService {
     // ✅ Cadastrar profissional com clínicas associadas
     @Transactional
     public Profissional cadastrarProfissional(Profissional profissional, Set<Long> clinicaIds) {
-        if (profissionalRepository.findByRegistro(profissional.getRegistro()).isPresent()) {
-            throw new RuntimeException("Erro: Registro já cadastrado!");
+        if (clinicaIds == null || clinicaIds.isEmpty()) {
+            throw new RuntimeException("Erro: O profissional deve estar associado a pelo menos uma clínica.");
         }
 
-        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream().collect(Collectors.toSet());
+        // ✅ Busca as clínicas e verifica se todas existem
+        Set<Clinica> clinicas = new HashSet<>(clinicaRepository.findAllById(clinicaIds));
 
         if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
-            throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
+            throw new RuntimeException("Erro: Uma ou mais clínicas informadas não existem.");
         }
 
+        // ✅ Associa clínicas ao profissional
         profissional.setClinicas(clinicas);
+        Profissional novoProfissional = profissionalRepository.save(profissional);
 
-        // ✅ Também adiciona o profissional na lista da clínica
+        // ✅ Atualiza as clínicas para garantir persistência da relação ManyToMany
         for (Clinica clinica : clinicas) {
-            clinica.getProfissionais().add(profissional);
+            clinica.getProfissionais().add(novoProfissional);
             clinicaRepository.save(clinica);
         }
 
-        return profissionalRepository.save(profissional);
+        return novoProfissional;
     }
 
     // ✅ Atualizar profissional e suas clínicas
@@ -67,15 +69,14 @@ public class ProfissionalService {
         profissionalExistente.setRegistro(profissionalAtualizado.getRegistro());
         profissionalExistente.setTelefone(profissionalAtualizado.getTelefone());
 
-        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream().collect(Collectors.toSet());
+        // ✅ Atualiza as clínicas associadas
+        Set<Clinica> clinicas = new HashSet<>(clinicaRepository.findAllById(clinicaIds));
 
-        if (clinicas.size() != clinicaIds.size()) {
-            throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
+        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
+            throw new RuntimeException("Erro: Uma ou mais clínicas informadas não existem.");
         }
 
         profissionalExistente.setClinicas(clinicas);
-
         return profissionalRepository.save(profissionalExistente);
     }
 

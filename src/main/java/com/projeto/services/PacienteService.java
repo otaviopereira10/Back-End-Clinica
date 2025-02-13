@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class PacienteService {
@@ -35,22 +35,28 @@ public class PacienteService {
     // ✅ Cadastrar paciente com clínicas associadas
     @Transactional
     public Paciente cadastrarPaciente(Paciente paciente, Set<Long> clinicaIds) {
-        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream().collect(Collectors.toSet());
-
-        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
-            throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
+        if (clinicaIds == null || clinicaIds.isEmpty()) {
+            throw new RuntimeException("Erro: O paciente deve estar associado a pelo menos uma clínica.");
         }
 
-        paciente.setClinicas(clinicas);
+        // ✅ Busca as clínicas e verifica se todas existem
+        Set<Clinica> clinicas = new HashSet<>(clinicaRepository.findAllById(clinicaIds));
 
-        // ✅ Também adiciona o paciente na lista da clínica
+        if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
+            throw new RuntimeException("Erro: Uma ou mais clínicas informadas não existem.");
+        }
+
+        // ✅ Associa clínicas ao paciente
+        paciente.setClinicas(clinicas);
+        Paciente novoPaciente = pacienteRepository.save(paciente);
+
+        // ✅ Atualiza as clínicas para garantir persistência da relação ManyToMany
         for (Clinica clinica : clinicas) {
-            clinica.getPacientes().add(paciente);
+            clinica.getPacientes().add(novoPaciente);
             clinicaRepository.save(clinica);
         }
 
-        return pacienteRepository.save(paciente);
+        return novoPaciente;
     }
 
     // ✅ Atualizar paciente e suas clínicas
@@ -63,11 +69,11 @@ public class PacienteService {
         pacienteExistente.setTelefone(pacienteAtualizado.getTelefone());
         pacienteExistente.setEndereco(pacienteAtualizado.getEndereco());
 
-        Set<Clinica> clinicas = clinicaRepository.findAllById(clinicaIds)
-                .stream().collect(Collectors.toSet());
+        // ✅ Atualiza as clínicas associadas
+        Set<Clinica> clinicas = new HashSet<>(clinicaRepository.findAllById(clinicaIds));
 
         if (clinicas.isEmpty() || clinicas.size() != clinicaIds.size()) {
-            throw new RuntimeException("Erro: Uma ou mais clínicas não foram encontradas.");
+            throw new RuntimeException("Erro: Uma ou mais clínicas informadas não existem.");
         }
 
         pacienteExistente.setClinicas(clinicas);
